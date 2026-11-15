@@ -1,0 +1,38 @@
+# Publica JobLens web en GitHub Pages: https://reinonegocio.github.io/joblens-web/
+# Para actualizar: sube un site.zip nuevo (la carpeta compilada "joblens-web").
+name: Publicar JobLens Web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Preparar sitio
+        run: |
+          test -f site.zip || { echo "Falta site.zip"; exit 1; }
+          mkdir site && unzip -q site.zip -d site
+          sed -i 's#<base href="/">#<base href="/joblens-web/">#' site/index.html
+          cp site/index.html site/404.html
+          touch site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
